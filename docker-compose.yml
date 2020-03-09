@@ -1,0 +1,52 @@
+version: '3.7'
+
+services:
+  postgresql:
+    image: postgres
+    environment:
+      POSTGRES_USER: anidb
+      POSTGRES_PASSWORD: pass
+    ports:
+      - '5432:5432'
+
+  api-postgres:
+    depends_on:
+      - postgresql
+      - migrate-postgres
+    build:
+      context: ./api_postgres
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3000:3000'
+    volumes:
+      - './api_postgres:/app'
+      - 'app/node_modules'
+
+  migrate-postgres:
+    depends_on:
+      - postgresql
+    build:
+      context: ./db/postgres
+      dockerfile: Dockerfile.dev
+    command: ./wait-for-it.sh postgresql:5432 -- npm start
+    volumes:
+      - './db/postgres/datasets:/app/datasets'
+      - './db/postgres/migrations:/app/migrations'
+      - './db/postgres/seeds:/app/seeds'
+      # mongodb:
+  #   image: mongo
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: excel
+  #     MONGO_INITDB_ROOT_PASSWORD: pass
+  #     MONGO_INITDB_DATABASE: anidb
+  #   volumes:
+  #     - ./db/mongo/init:/docker-entrypoint-initdb.d
+  #   ports:
+  #     - '27017:27017'
+  # neo4j:
+  #   image: neo4j
+  #   environment:
+  #     NEO4J_AUTH : neo4j/pass
+  #   ports:
+  #     - "7474:7474"
+  #     - "7687:7687"
